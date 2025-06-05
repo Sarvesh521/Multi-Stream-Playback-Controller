@@ -3,13 +3,13 @@ import Ably from 'ably';
 
 let ablyInstance = null;
 let activeChannel = null;
-const ABLY_API_KEY = "FhmMCw._lReJg:fdi6BuZ7oiu8zceJloz0DLrOOu_C3BLaIxMqyeg34oM"; // <<< REPLACE WITH YOUR ACTUAL KEY
-const CHANNEL_NAME_PREFIX = "watch-party-";
-const PLAYER_MESSAGE_NAME = "player-action";
+export const ABLY_API_KEY = "FhmMCw._lReJg:fdi6BuZ7oiu8zceJloz0DLrOOu_C3BLaIxMqyeg34oM"; //
+export const CHANNEL_NAME_PREFIX = "watch-party-"; // Export this
+export const PLAYER_MESSAGE_NAME = "player-action";
 
 let currentSubscribedRoomId = null;
 let ablyClientId = null;
-let presenceUpdateCallback = null; // Callback to notify about presence changes
+let presenceUpdateCallback = null;
 
 export async function connectToAbly() {
     if (ablyInstance && ablyInstance.connection.state === 'connected') {
@@ -23,14 +23,13 @@ export async function connectToAbly() {
 
     console.log("AblyService: Connecting to Ably...");
     const generatedClientId = `ext-client-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-    // Store the generated ID immediately, it will be updated by Ably's assigned ID on connection
     ablyClientId = generatedClientId;
 
     ablyInstance = new Ably.Realtime({ key: ABLY_API_KEY, clientId: generatedClientId });
 
     return new Promise((resolve, reject) => {
         ablyInstance.connection.on("connected", () => {
-            ablyClientId = ablyInstance.auth.clientId; // Update with actual clientId from Ably
+            ablyClientId = ablyInstance.auth.clientId;
             console.log(`AblyService: Connected to Ably successfully! Client ID: ${ablyClientId}`);
             resolve(ablyInstance);
         });
@@ -49,6 +48,15 @@ export async function connectToAbly() {
     });
 }
 
+// Function to get the current Ably instance, ensures connection
+export async function getAblyInstance() {
+    if (!ablyInstance || ablyInstance.connection.state !== 'connected') {
+        return await connectToAbly();
+    }
+    return ablyInstance;
+}
+
+
 export function getAblyClientId() {
     return ablyClientId;
 }
@@ -60,51 +68,42 @@ async function updateLocalParticipantCount() {
             presenceUpdateCallback(members.length);
         } catch (err) {
             console.error("AblyService: Error getting presence members:", err);
-            presenceUpdateCallback(0); // Or handle error appropriately
+            presenceUpdateCallback(0);
         }
     }
 }
 
 export async function joinAndSubscribe(roomId, messageCallback, _presenceUpdateCallback) {
-    if (!ablyInstance || ablyInstance.connection.state !== 'connected') {
-        try {
-            console.log("AblyService: Not connected, attempting to connect before joining room.");
-            await connectToAbly();
-            if (!ablyInstance || ablyInstance.connection.state !== 'connected') {
-                console.error("AblyService: Connection attempt failed. Cannot join room.");
-                return null;
-            }
-        } catch (err) {
-            console.error("AblyService: Failed to connect before joining room.", err);
-            return null;
-        }
+    const instance = await getAblyInstance();
+    if (!instance) {
+        console.error("AblyService: Connection attempt failed. Cannot join room.");
+        return null;
     }
 
     if (_presenceUpdateCallback) {
-        presenceUpdateCallback = _presenceUpdateCallback; // Store the callback
+        presenceUpdateCallback = _presenceUpdateCallback;
     }
 
     const newChannelName = CHANNEL_NAME_PREFIX + roomId;
 
     if (activeChannel && activeChannel.name === newChannelName && activeChannel.state === 'attached') {
         console.log(`AblyService: Already subscribed to ${newChannelName}. Re-attaching listeners.`);
-        activeChannel.unsubscribe(); // Unsubscribe all listeners first
+        activeChannel.unsubscribe();
         await activeChannel.subscribe(PLAYER_MESSAGE_NAME, (message) => {
              if (messageCallback && typeof messageCallback === 'function') {
                 messageCallback(message.data, message.clientId);
             }
         });
-        // Re-subscribe to presence events
-        await activeChannel.presence.unsubscribe(); // Clear previous presence listeners
+        await activeChannel.presence.unsubscribe();
         await activeChannel.presence.subscribe(['enter', 'leave', 'update'], updateLocalParticipantCount);
-        updateLocalParticipantCount(); // Initial count
+        updateLocalParticipantCount();
         return activeChannel;
     }
 
-    if (activeChannel && activeChannel.name !== newChannelName) { // If on a different channel
+    if (activeChannel && activeChannel.name !== newChannelName) {
         try {
             console.log(`AblyService: Detaching from old channel ${activeChannel.name}`);
-            await activeChannel.presence.unsubscribe(); // Unsubscribe from presence
+            await activeChannel.presence.unsubscribe();
             await activeChannel.detach();
             activeChannel.unsubscribe();
             console.log(`AblyService: Detached and unsubscribed from ${activeChannel.name}`);
@@ -115,29 +114,24 @@ export async function joinAndSubscribe(roomId, messageCallback, _presenceUpdateC
     }
     
     currentSubscribedRoomId = roomId;
-    activeChannel = ablyInstance.channels.get(newChannelName);
+    activeChannel = instance.channels.get(newChannelName); // Use instance here
     console.log(`AblyService: Getting channel ${newChannelName}`);
 
     try {
         await activeChannel.attach();
         console.log(`AblyService: Channel ${newChannelName} attached.`);
         
-        activeChannel.unsubscribe(); // Clear any existing subscriptions on this new channel instance
+        activeChannel.unsubscribe();
         await activeChannel.subscribe(PLAYER_MESSAGE_NAME, (message) => {
-            // console.log(`AblyService: Message received on ${activeChannel.name}:`, message.data);
             if (messageCallback && typeof messageCallback === 'function') {
-                messageCallback(message.data, message.clientId); // Pass clientId
+                messageCallback(message.data, message.clientId);
             }
         });
         console.log(`AblyService: Successfully subscribed to channel '${activeChannel.name}' for message '${PLAYER_MESSAGE_NAME}'.`);
 
-        // Subscribe to presence events
-        await activeChannel.presence.unsubscribe(); // Clear previous presence listeners for this channel name
+        await activeChannel.presence.unsubscribe();
         await activeChannel.presence.subscribe(['enter', 'leave', 'update'], updateLocalParticipantCount);
-        // Enter presence for the current client
-        await activeChannel.presence.enter(); // This will trigger an 'enter' event, and thus updateLocalParticipantCount
-        // updateParticipantCount(); // No longer strictly needed here as enter() will trigger it.
-
+        await activeChannel.presence.enter();
         return activeChannel;
     } catch (err) {
         console.error(`AblyService: Error subscribing/attaching to channel '${newChannelName}':`, err);
@@ -148,23 +142,15 @@ export async function joinAndSubscribe(roomId, messageCallback, _presenceUpdateC
 }
 
 export async function publishPlayerAction(roomId, payload) {
-    if (!ablyInstance || ablyInstance.connection.state !== 'connected') {
-        console.warn(`AblyService: Not connected. Attempting to connect before publishing.`);
-        try {
-            await connectToAbly();
-            if (!ablyInstance || ablyInstance.connection.state !== 'connected') {
-                console.error("AblyService: Connection attempt failed. Cannot publish.");
-                return;
-            }
-        } catch (err) {
-            console.error("AblyService: Failed to connect before publishing.", err);
-            return;
-        }
+    const instance = await getAblyInstance(); // Ensure connection
+    if (!instance) {
+        console.error("AblyService: Connection attempt failed. Cannot publish.");
+        return;
     }
 
     if (!activeChannel || currentSubscribedRoomId !== roomId || activeChannel.name !== (CHANNEL_NAME_PREFIX + roomId) || activeChannel.state !== 'attached') {
         console.warn(`AblyService: Not properly connected/subscribed to room ${roomId}. Attempting to join/rejoin.`);
-        const channel = await joinAndSubscribe(roomId, () => {}, presenceUpdateCallback); // Pass existing presenceUpdateCallback
+        const channel = await joinAndSubscribe(roomId, () => {}, presenceUpdateCallback);
         if (!channel) {
             console.error(`AblyService: Still no channel for room ${roomId} after attempt. Cannot publish.`);
             return;
@@ -189,7 +175,6 @@ export async function leaveRoom() {
         const channelName = activeChannel.name;
         try {
             console.log(`AblyService: Leaving presence and detaching from channel ${channelName}`);
-            // Unsubscribe first to stop receiving messages immediately
             activeChannel.unsubscribe();
             await activeChannel.presence.unsubscribe();
             await activeChannel.presence.leave(); 
@@ -201,9 +186,8 @@ export async function leaveRoom() {
             activeChannel = null;
             currentSubscribedRoomId = null;
             if (presenceUpdateCallback) {
-                presenceUpdateCallback(0); // Notify UI that participant count is 0
+                presenceUpdateCallback(0);
             }
-            // presenceUpdateCallback = null; // Don't nullify here, it might be needed if rejoining the same room later
         }
     } else {
         console.log("AblyService: No active channel to leave.");
