@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Multi-Stream Playback Controller (React UI v2)",
-  "version": "1.4",
+  "name": "Watch-Party",
+  "version": "1.2",
   "description": "Controls playback and syncs with Ably. Uses a React web app for UI.",
   "permissions": [
     "activeTab",
