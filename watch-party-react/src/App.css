@@ -1,0 +1,152 @@
+/* watch-party-react-js/src/App.css */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+        Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f2f5;
+    color: #1c1e21;
+    line-height: 1.5;
+}
+
+.app-container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 20px 30px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.error-container {
+    text-align: center;
+    color: #fa383e;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #dadde1;
+}
+
+header h1 {
+    color: #1877f2; /* Facebook blue */
+    font-size: 28px;
+    margin-bottom: 5px;
+}
+
+header p {
+    font-size: 0.95em;
+    color: #606770;
+    margin: 3px 0;
+}
+
+.host-indicator {
+    color: #31a24c; /* Green */
+    font-weight: bold;
+}
+
+.error-message {
+    color: #fa383e; /* Red */
+    background-color: #fdeजिन;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+    text-align: center;
+}
+
+section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f7f8fa;
+    border: 1px solid #dddfe2;
+    border-radius: 6px;
+}
+
+section h2 {
+    font-size: 20px;
+    color: #1c1e21;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e4e6eb;
+    padding-bottom: 10px;
+}
+
+.input-field {
+    width: calc(100% - 24px); /* Account for padding */
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border: 1px solid #ccd0d5;
+    border-radius: 6px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+.input-field:focus {
+    border-color: #1877f2;
+    box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2);
+    outline: none;
+}
+
+.button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: bold;
+    margin-right: 8px;
+    transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    line-height: 1.33;
+}
+.button:last-child {
+    margin-right: 0;
+}
+.button:disabled {
+    background-color: #e4e6eb !important;
+    color: #bcc0c4 !important;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.primary-button {
+    background-color: #1877f2;
+    color: white;
+}
+.primary-button:hover:not(:disabled) {
+    background-color: #166fe5;
+}
+
+.secondary-button {
+    background-color: #6c757d;
+    color: white;
+}
+.secondary-button:hover:not(:disabled) {
+    background-color: #5a6268;
+}
+
+.host-button {
+    background-color: #42b72a; /* Green */
+    color: white;
+    display: block; /* Make it full width within its container if desired */
+    width: 100%;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+.host-button:hover:not(:disabled) {
+    background-color: #36a420;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background-color: #dadde1;
+    margin: 25px 0;
+}
+
+/* Optional: Add some spacing for sections if needed */
+.room-controls-section + .host-controls-section {
+    margin-top: 20px;
+}

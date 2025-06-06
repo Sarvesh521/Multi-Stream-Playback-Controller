@@ -1,19 +1,20 @@
 {
   "manifest_version": 3,
-  "name": "Multi-Stream Playback Controller (Ably)",
-  "version": "1.1",
-  "description": "Controls playback on Netflix/Hotstar and syncs with Ably.",
+  "name": "Multi-Stream Playback Controller (React UI v2)",
+  "version": "1.4",
+  "description": "Controls playback and syncs with Ably. Uses a React web app for UI.",
   "permissions": [
     "activeTab",
     "scripting",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "host_permissions": [
     "*://*.netflix.com/*",
-    "*://*.hotstar.com/*"
+    "*://*.hotstar.com/*",
+    "http://localhost:5173/*"
   ],
   "action": {
-    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -29,9 +30,20 @@
     {
       "matches": ["*://*.netflix.com/*", "*://*.hotstar.com/*"],
       "js": ["dist/content.bundle.js"]
+    },
+    {
+      "matches": ["http://localhost:5173/*"],
+      "js": ["dist/webapp-content-script.bundle.js"],
+      "run_at": "document_idle"
     }
   ],
   "background": {
     "service_worker": "dist/background.bundle.js"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
